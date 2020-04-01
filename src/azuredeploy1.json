@@ -1,0 +1,90 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "accountName": {
+            "type": "string",
+            "defaultValue": "my-cosmos-account",
+            "metadata": {
+                "description": "Cosmos DB account name, max length 44 characters"
+            }
+        },
+        "location": {
+            "type": "string",
+            "defaultValue": "[resourceGroup().location]",
+            "metadata": {
+                "description": "Location for the Cosmos DB account."
+            }
+        },
+        "primaryRegion":{
+            "type":"string",
+            "metadata": {
+                "description": "The primary replica region for the Cosmos DB account."
+            }			
+        }
+    },
+    "variables": {
+        "accountName": "[toLower(parameters('accountName'))]",
+        "locations": 
+        [ 
+            {
+                "locationName": "[parameters('primaryRegion')]",
+                "failoverPriority": 0,
+                "isZoneRedundant": false
+            }
+        ]
+    },
+    "resources": 
+    [
+        {
+            "type": "Microsoft.DocumentDB/databaseAccounts",
+            "name": "[variables('accountName')]",
+            "apiVersion": "2019-08-01",
+            "kind": "GlobalDocumentDB",
+            "location": "[parameters('location')]",
+            "properties": {
+                "locations": "[variables('locations')]",
+                "databaseAccountOfferType": "Standard"
+            }
+        },
+        {
+            "type": "Microsoft.DocumentDB/databaseAccounts/sqlDatabases",
+            "name": "[concat(variables('accountName'), '/DeviceDB')]",
+            "apiVersion": "2019-08-01",
+            "dependsOn": [ "[resourceId('Microsoft.DocumentDB/databaseAccounts', variables('accountName'))]" ],
+            "properties":{
+                "resource":{
+                    "id": "DeviceDB"
+                },
+                "options": { }
+            }
+        },
+        {
+            "type": "Microsoft.DocumentDB/databaseAccounts/sqlDatabases/containers",
+            "name": "[concat(variables('accountName'), '/DeviceDB/DeviceData')]",
+            "apiVersion": "2019-08-01",
+            "dependsOn": [ "[resourceId('Microsoft.DocumentDB/databaseAccounts/sqlDatabases', variables('accountName'), 'DeviceDB')]" ],
+            "properties":
+            {
+                "resource":{
+                    "id":  "DeviceData",
+                    "partitionKey": {
+                        "paths": [
+                        "/deviceId"
+                        ],
+                        "kind": "Hash"
+                    },
+                    "indexingPolicy": {
+                        "indexingMode": "consistent",
+                        "includedPaths": [{
+                                "path": "/*"
+                            }
+                        ],
+                        "excludedPaths": []
+                    }
+                },
+                "options": { "throughput": "400" }
+            }
+        }
+    ]
+    }
