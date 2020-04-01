@@ -30,7 +30,7 @@ namespace DataGenerator
             Console.WriteLine("Hello Data Generator!");
 
             
-            string connectionString = "AccountEndpoint=https://mjb-cosmos-monitor.documents.azure.com:443/;AccountKey=YOakxzPjlAoI6StJAH5MPNB9EaE3JB541DfFTppNOFcqbHQ1kedLf346NwTszjDalF1flljZpsukgjIxXDGzIA==;";
+            string connectionString = "enter connection string here";
             string databaseName = "DeviceDB";
             string containerName = "DeviceData";
             string partitionKey = "/deviceId";
